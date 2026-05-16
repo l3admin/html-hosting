@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parzley Interactive Pitch Prototype</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            parzley: {
+              primary: '#4F46E5',
+              primaryDark: '#4338CA',
+            },
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: #f9fafb;
+      color: #111827;
+    }
+    .pz-surface {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+    }
+    .pz-surface-elevated {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+    }
+    .view { display: none; }
+    .view.active { display: block; }
+    .fade-in { animation: fadeIn 0.45s ease forwards; }
+    .tab-active {
+      background: #eef2ff;
+      border-color: #c7d2fe;
+      color: #312e81;
+      box-shadow: 0 1px 2px rgba(79, 70, 229, 0.08);
+    }
+    .tab-passive {
+      background: #ffffff;
+      border-color: #e5e7eb;
+      color: #4b5563;
+    }
+    .tab-passive:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+    .mini-line {
+      height: 2px;
+      background: linear-gradient(90deg, #4f46e5, #6366f1, #4338ca);
+      border-radius: 9999px;
+    }
+    .nav-btn, .step-btn, .funnel-btn, .funnel-stage-btn {
+      transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .nav-btn:focus-visible, .step-btn:focus-visible, .funnel-btn:focus-visible, .funnel-stage-btn:focus-visible {
+      outline: 2px solid #4f46e5;
+      outline-offset: 2px;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #f3f4f6; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    details.market-buyers > summary {
+      list-style: none;
+    }
+    details.market-buyers > summary::-webkit-details-marker {
+      display: none;
+    }
+    details.market-buyers > summary::marker {
+      content: '';
+    }
+    .market-card-hover {
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .market-card-hover:hover {
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+      border-color: #c7d2fe;
+    }
+    details.market-buyers[open] summary .label-expand { display: none; }
+    details.market-buyers:not([open]) summary .label-collapse { display: none; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans antialiased text-sm min-h-screen leading-normal">
+  <header class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-md shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-2.5 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-2">
+      <div class="min-w-0">
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold">Parzley Interactive</div>
+        <h1 class="text-base font-bold text-gray-900 leading-tight">Policy Checker Growth Case</h1>
+      </div>
+      <nav class="flex flex-wrap gap-1.5 text-xs" aria-label="Pitch sections">
+        <button type="button" onclick="showView('problem')" id="problemTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-active font-medium">Problem</button>
+        <button type="button" onclick="showView('product')" id="productTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">Product</button>
+        <button type="button" onclick="showView('works')" id="worksTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">How it Works</button>
+        <button type="button" onclick="showView('funnel')" id="funnelTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">Funnel</button>
+        <button type="button" onclick="showView('gtm')" id="gtmTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">GTM</button>
+        <button type="button" onclick="showView('opportunity')" id="opportunityTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">Opportunity</button>
+        <button type="button" onclick="showView('lifecycle')" id="lifecycleTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">P2 Revenue</button>
+        <button type="button" onclick="showView('marketExit')" id="marketExitTab" class="nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium">Market &amp; Exit</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-4 md:py-5">
+    <section id="problemView" class="view active fade-in space-y-4">
+      <div class="pz-surface-elevated rounded-xl overflow-hidden bg-gradient-to-br from-white via-indigo-50/50 to-gray-50 p-4 md:p-5 border-indigo-100">
+        <div class="grid lg:grid-cols-2 gap-4 lg:gap-5 items-start">
+          <div class="space-y-3 min-w-0">
+            <div class="inline-flex px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800 text-xs font-medium">The opening problem</div>
+            <h2 class="text-lg sm:text-xl font-bold text-gray-900 leading-snug">Auditing and updating policy and compliance documents is slow, time-consuming, and error-prone.</h2>
+            <p class="text-sm text-gray-600 leading-snug">Parzley turns messy policy documents into structured assessments, recommendations, and improved outputs, without relying on one-off manual review.</p>
+          </div>
+          <div class="rounded-lg border border-indigo-200 bg-white/95 p-3.5 shadow-sm ring-1 ring-indigo-100/80">
+            <div class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-1.5 items-start">
+              <div class="text-[10px] uppercase tracking-[0.22em] text-indigo-600 font-semibold leading-snug pt-0.5 min-w-0">UK organisations</div>
+              <div class="row-span-2 shrink-0 text-right self-start justify-self-end">
+                <div class="text-2xl sm:text-3xl font-bold text-indigo-700 tracking-tight leading-none">~£1-3bn</div>
+                <p class="text-[10px] text-gray-500 mt-1 leading-snug max-w-[11rem] ml-auto">per year operating cost, order of magnitude</p>
+              </div>
+              <p class="text-xs font-bold text-gray-900 leading-snug col-start-1">Direct spend on policy validation today</p>
+            </div>
+            <p class="text-[11px] text-gray-600 mt-3 leading-snug border-t border-gray-100 pt-2">Illustrative only: same segment mid-points as the tiles below, scaled to UK counts (~£7.5bn if every organisation were at mid-case spend), then a <span class="font-medium text-gray-800">~15-40% participation</span> haircut. <span class="font-medium text-gray-800">Not a formal TAM</span> or vendor market size.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-2.5">
+        <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold mb-1">Pain</div><h3 class="text-sm font-bold mb-1 text-gray-900 leading-snug">Manual review</h3><p class="text-gray-600 text-xs leading-snug">Human reviewers read, compare, interpret, and rewrite documents by hand.</p></div>
+        <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold mb-1">Risk</div><h3 class="text-sm font-bold mb-1 text-gray-900 leading-snug">Hidden requirements</h3><p class="text-gray-600 text-xs leading-snug">Important obligations are buried in dense prose and are easily missed.</p></div>
+        <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold mb-1">Trust gap</div><h3 class="text-sm font-bold mb-1 text-gray-900 leading-snug">Subjective analysis</h3><p class="text-gray-600 text-xs leading-snug">Broad reviews are hard to repeat, audit, or defend.</p></div>
+        <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold mb-1">Cost</div><h3 class="text-sm font-bold mb-1 text-gray-900 leading-snug">Expensive fixes</h3><p class="text-gray-600 text-xs leading-snug">Professional document review can cost hundreds to thousands per document.</p></div>
+        <div class="rounded-lg border border-amber-200 bg-amber-50/70 p-3.5 shadow-sm"><div class="text-amber-900 text-xs font-semibold mb-1">Fines &amp; enforcement</div><h3 class="text-sm font-bold mb-1 text-amber-950 leading-snug">Tail risk</h3><p class="text-amber-950/90 text-xs leading-snug">Weak documentation and weak audit trails invite regulatory action, monetary penalties, and remediation costs.</p></div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5 space-y-3">
+        <div>
+          <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">The financial impact</div>
+          <p class="text-sm text-gray-600 leading-snug max-w-3xl">Typical per-document economics for policy review: external, internal, and where Parzley aims to land.</p>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-2.5">
+          <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold">External review</div><div class="text-xl font-bold my-2 text-gray-900">£300-£2k+</div><p class="text-gray-600 text-xs leading-snug">Professional manual review per document.</p></div>
+          <div class="pz-surface rounded-lg p-3.5"><div class="text-indigo-600 text-xs font-semibold">Internal consultant cost</div><div class="text-xl font-bold my-2 text-gray-900">~£100</div><p class="text-gray-600 text-xs leading-snug">Estimated internal cost per document.</p></div>
+          <div class="rounded-lg border border-indigo-200 bg-indigo-50 p-3.5 shadow-sm"><div class="text-indigo-800 text-xs font-semibold">Parzley target</div><div class="text-xl font-bold my-2 text-gray-900">~⅓ cost</div><p class="text-gray-700 text-xs leading-snug">Structured, repeatable, fast assessment and remediation.</p></div>
+        </div>
+        <div class="pt-2 border-t border-gray-200">
+          <p class="text-xs font-semibold text-gray-800 mb-2">Volume and exposure by segment (illustrative UK)</p>
+          <p class="text-[11px] text-gray-600 mb-2.5 leading-snug">Policy validation frequency and annual cost exposure scale with organisation size; adoption likelihood reflects how readily each segment buys when the need is triggered.</p>
+          <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-2.5">
+            <div class="pz-surface rounded-lg p-3 space-y-1.5">
+              <div class="text-xs font-bold text-gray-900 leading-tight">Solo / non-employers</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">UK orgs</span> ~4.27m</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Checks / year</span> 0-2</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Annual exposure</span> £0-£500</div>
+              <div class="text-[11px] text-indigo-700 font-medium"><span class="text-gray-500 font-normal">Adoption</span> High, when triggered</div>
+            </div>
+            <div class="pz-surface rounded-lg p-3 space-y-1.5">
+              <div class="text-xs font-bold text-gray-900 leading-tight">Micro / startups</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">UK orgs</span> ~1.15m</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Checks / year</span> 2-8</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Annual exposure</span> £250-£2k</div>
+              <div class="text-[11px] text-indigo-700 font-medium"><span class="text-gray-500 font-normal">Adoption</span> High</div>
+            </div>
+            <div class="pz-surface rounded-lg p-3 space-y-1.5">
+              <div class="text-xs font-bold text-gray-900 leading-tight">Small &amp; medium employers</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">UK orgs</span> ~258k</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Checks / year</span> 8-40</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Annual exposure</span> £2k-£20k</div>
+              <div class="text-[11px] text-indigo-700 font-medium"><span class="text-gray-500 font-normal">Adoption</span> Medium</div>
+            </div>
+            <div class="rounded-lg border border-indigo-200 bg-indigo-50/60 p-3 space-y-1.5 shadow-sm">
+              <div class="text-xs font-bold text-gray-900 leading-tight">Large / regulated</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">UK orgs</span> ~8.3k</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Checks / year</span> 100-1,000+</div>
+              <div class="text-[11px] text-gray-600"><span class="text-gray-500">Annual exposure</span> £50k-£500k+</div>
+              <div class="text-[11px] text-indigo-800 font-medium"><span class="text-gray-600 font-normal">Adoption</span> Low initially</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end"><button type="button" onclick="showView('product')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">There’s a better way →</button></div>
+    </section>
+
+    <section id="productView" class="view fade-in space-y-4">
+      <div class="grid lg:grid-cols-2 gap-3 items-stretch">
+        <div class="pz-surface-elevated rounded-xl p-4 md:p-5 space-y-3">
+          <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold">The product</div>
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">A structured compliance automation system, not a chatbot.</h2>
+          <p class="text-sm text-gray-600 leading-snug">Parzley enforces accuracy, traceability and minimises potential for data leakage. It breaks standards into atomic requirements with explicit test instructions, checks a target document against them, then produces findings, recommendations, and remediated outputs.</p>
+        </div>
+        <div class="pz-surface-elevated rounded-xl p-4 md:p-5 bg-gray-50/80">
+          <div class="grid grid-cols-3 gap-2 text-center text-xs">
+            <div class="rounded-lg bg-indigo-50 border border-indigo-200 p-3"><div class="text-base mb-1 text-indigo-700 font-bold">1</div><div class="font-semibold text-gray-900 text-xs">Diagnose</div><p class="text-gray-600 mt-1 leading-snug">Identify gaps.</p></div>
+            <div class="rounded-lg bg-white border border-gray-200 p-3 shadow-sm"><div class="text-base mb-1 text-indigo-700 font-bold">2</div><div class="font-semibold text-gray-900 text-xs">Fix</div><p class="text-gray-600 mt-1 leading-snug">Generate updates.</p></div>
+            <div class="rounded-lg bg-indigo-50/70 border border-indigo-100 p-3"><div class="text-base mb-1 text-indigo-700 font-bold">3</div><div class="font-semibold text-gray-900 text-xs">Produce</div><p class="text-gray-600 mt-1 leading-snug">Create output.</p></div>
+          </div>
+          <div class="mini-line mt-4"></div>
+          <p class="text-sm text-gray-700 mt-3 leading-snug">The core innovation is atomisation: one requirement, one testable condition, one finding.</p>
+        </div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5 border-indigo-100">
+        <div class="grid lg:grid-cols-2 gap-4 lg:gap-6 items-start">
+          <div class="space-y-2.5 min-w-0">
+            <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold">Common question</div>
+            <h3 class="text-sm font-bold text-gray-900 leading-snug">Why not just use Claude, ChatGPT, Gemini, or another off-the-shelf assistant?</h3>
+            <p class="text-xs text-gray-600 leading-snug">Compliance workflows require repeatability, traceability, and controlled evaluation against the same standard every time.</p>
+            <p class="text-xs text-gray-600 leading-snug">Generic assistants provide no reusable assessment logic, no requirement-level traceability, and no dependable governance workflow.</p>
+            <p class="text-xs text-gray-600 leading-snug">Parzley transforms policies and standards into reusable assessment infrastructure with evidence-linked findings, remediation workflows, and governed outputs.</p>
+          </div>
+          <div class="rounded-lg border border-gray-200 bg-white overflow-hidden shadow-sm min-w-0" aria-label="Generic assistant compared with Parzley">
+            <div class="grid grid-cols-2 gap-0 text-[10px] uppercase tracking-[0.12em] font-semibold">
+              <div class="px-3 py-2 bg-gray-50 text-gray-500 border-b border-gray-100">Generic assistant</div>
+              <div class="px-3 py-2 bg-indigo-50/80 text-indigo-800 border-b border-indigo-100/80">Parzley</div>
+            </div>
+            <div class="divide-y divide-gray-100 text-xs leading-snug">
+              <div class="grid grid-cols-2 gap-0">
+                <div class="px-3 py-2 text-gray-600 bg-gray-50/40">Different answer each run</div>
+                <div class="px-3 py-2 text-gray-900 font-medium bg-indigo-50/35">Highly structured assessment logic</div>
+              </div>
+              <div class="grid grid-cols-2 gap-0">
+                <div class="px-3 py-2 text-gray-600 bg-gray-50/40">Random prompting and usage</div>
+                <div class="px-3 py-2 text-gray-900 font-medium bg-indigo-50/35">Simplified &amp; structured process</div>
+              </div>
+              <div class="grid grid-cols-2 gap-0">
+                <div class="px-3 py-2 text-gray-600 bg-gray-50/40">No source data traceability</div>
+                <div class="px-3 py-2 text-gray-900 font-medium bg-indigo-50/35">Auditable evidence-linked findings</div>
+              </div>
+              <div class="grid grid-cols-2 gap-0">
+                <div class="px-3 py-2 text-gray-600 bg-gray-50/40">No audit trail or traceability</div>
+                <div class="px-3 py-2 text-gray-900 font-medium bg-indigo-50/35">Human-reviewed auditable output</div>
+              </div>
+              <div class="grid grid-cols-2 gap-0">
+                <div class="px-3 py-2 text-gray-600 bg-gray-50/40 rounded-bl-lg">Manual orchestration</div>
+                <div class="px-3 py-2 text-gray-900 font-medium bg-indigo-50/35 rounded-br-lg">Systemised repeatable workflows</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-bold text-gray-900 leading-snug mb-2 px-0.5">A Problem &amp; Use Case specific application of AI</h3>
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Precision</div><p class="text-xs text-gray-600 mt-1 leading-snug">Policies are decomposed into independently testable requirements instead of broad prompt-based interpretation.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Assessment Logic</div><p class="text-xs text-gray-600 mt-1 leading-snug">Requirements include predefined testing instructions to improve consistency and reduce subjective interpretation.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Repeatability</div><p class="text-xs text-gray-600 mt-1 leading-snug">Reuse the same codified standard across unlimited assessments with consistent evaluation logic.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Auditability</div><p class="text-xs text-gray-600 mt-1 leading-snug">Every finding is linked to specific requirements and supporting evidence for review and traceability.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Visibility</div><p class="text-xs text-gray-600 mt-1 leading-snug">Inspect coverage, partial alignment, missing requirements, and remediation status at requirement level.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Gap Detection</div><p class="text-xs text-gray-600 mt-1 leading-snug">Continuously identify gaps, risk areas, and policy drift before they become audit or operational issues.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Remediation</div><p class="text-xs text-gray-600 mt-1 leading-snug">Generate targeted remediation recommendations and revised documents from identified gaps.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Human Control</div><p class="text-xs text-gray-600 mt-1 leading-snug">Humans remain in control of approvals, edits, findings review, and final document promotion.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Data Handling</div><p class="text-xs text-gray-600 mt-1 leading-snug">Documents are processed in controlled segments to minimise unnecessary data exposure during analysis.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Speed &amp; Throughput</div><p class="text-xs text-gray-600 mt-1 leading-snug">Assessments that normally take hours of manual review can be completed in minutes.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Governance Workflows</div><p class="text-xs text-gray-600 mt-1 leading-snug">Reusable standards, findings, and revised documents persist across repeat governance operations.</p></div>
+        <div class="pz-surface rounded-lg p-3"><div class="text-indigo-600 font-semibold text-xs">Reliability Controls</div><p class="text-xs text-gray-600 mt-1 leading-snug">Multi-stage validation and deterministic checks help improve output consistency and reduce hallucination risk.</p></div>
+        </div>
+      </div>
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('problem')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <button type="button" onclick="showView('works')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Show the system →</button>
+      </div>
+    </section>
+
+    <section id="worksView" class="view fade-in space-y-4">
+      <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold px-0.5">How it works</div>
+
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5">
+        <div class="mb-3 max-w-3xl">
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">How assessments work</h2>
+          <p class="text-sm text-gray-600 mt-1 leading-snug">Structured, evidence-linked analysis workflows designed for repeatable governance operations.</p>
+          <p class="mt-2 text-[10px] text-gray-500 leading-snug flex flex-wrap gap-x-2 gap-y-0.5"><span class="whitespace-nowrap">Requirement-level analysis</span><span class="text-gray-300">·</span><span class="whitespace-nowrap">Evidence-linked findings</span><span class="text-gray-300">·</span><span class="whitespace-nowrap">Controlled document processing</span></p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <button type="button" onclick="setAssessmentStep(0)" class="group step-btn assessment-step-btn rounded-lg border border-indigo-300 bg-indigo-50 p-2.5 text-left shadow-sm"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">01</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Select Standard</span></div></button>
+          <button type="button" onclick="setAssessmentStep(1)" class="group step-btn assessment-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">02</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Upload Target Document</span></div></button>
+          <button type="button" onclick="setAssessmentStep(2)" class="group step-btn assessment-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">03</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Run Assessment</span></div></button>
+          <button type="button" onclick="setAssessmentStep(3)" class="group step-btn assessment-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">04</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Review Findings</span></div></button>
+          <button type="button" onclick="setAssessmentStep(4)" class="group step-btn assessment-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50 sm:col-span-2 lg:col-span-1"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">05</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Generate Outputs</span></div></button>
+        </div>
+        <div id="assessmentStepPanel" class="mt-3 rounded-lg bg-gray-50 border border-gray-200 p-3.5 md:p-4">
+          <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 mb-1.5"><span class="text-indigo-700 text-xs font-semibold tabular-nums shrink-0">01</span><h3 class="text-sm font-bold text-gray-900 leading-snug">Select Standard</h3></div>
+          <p class="text-sm text-gray-600 leading-snug">Choose a codified standard or reusable internal baseline.</p>
+        </div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5">
+        <div class="mb-3 max-w-3xl">
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">How codified standards are created</h2>
+          <p class="text-sm text-gray-600 mt-1 leading-snug">Transform policies, standards, and frameworks into reusable assessment infrastructure.</p>
+          <p class="mt-2 text-[10px] text-gray-500 leading-snug flex flex-wrap gap-x-2 gap-y-0.5"><span class="whitespace-nowrap">Reusable governance baselines</span><span class="text-gray-300">·</span><span class="whitespace-nowrap">Human-reviewed workflows</span><span class="text-gray-300">·</span><span class="whitespace-nowrap">Operational compliance infrastructure</span></p>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+          <button type="button" onclick="setStandardStep(0)" class="group step-btn standard-step-btn rounded-lg border border-indigo-300 bg-indigo-50 p-2.5 text-left shadow-sm"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">01</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Ingest Source Material</span></div></button>
+          <button type="button" onclick="setStandardStep(1)" class="group step-btn standard-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">02</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Extract Atomic Requirements</span></div></button>
+          <button type="button" onclick="setStandardStep(2)" class="group step-btn standard-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">03</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Attach Assessment Logic</span></div></button>
+          <button type="button" onclick="setStandardStep(3)" class="group step-btn standard-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">04</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Create Reusable Standard</span></div></button>
+          <button type="button" onclick="setStandardStep(4)" class="group step-btn standard-step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50 sm:col-span-2 lg:col-span-1"><div class="flex items-baseline gap-2 min-w-0 w-full"><span class="shrink-0 text-[10px] font-semibold tabular-nums text-indigo-600 group-[.border-indigo-300]:text-indigo-700">05</span><span class="font-semibold text-gray-900 text-xs leading-tight min-w-0">Operationalise Governance</span></div></button>
+        </div>
+        <div id="standardStepPanel" class="mt-3 rounded-lg bg-gray-50 border border-gray-200 p-3.5 md:p-4">
+          <div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 mb-1.5"><span class="text-indigo-700 text-xs font-semibold tabular-nums shrink-0">01</span><h3 class="text-sm font-bold text-gray-900 leading-snug">Ingest Source Material</h3></div>
+          <p class="text-sm text-gray-600 leading-snug">Upload policies, frameworks, standards, or internal governance documentation.</p>
+        </div>
+      </div>
+
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('product')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <button type="button" onclick="showView('funnel')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Show the funnel →</button>
+      </div>
+    </section>
+
+    <section id="funnelView" class="view fade-in space-y-4">
+      <div class="pz-surface-elevated rounded-xl bg-gradient-to-br from-white via-indigo-50/35 to-gray-50 p-4 md:p-5 border-indigo-100">
+        <div class="mb-5 max-w-3xl">
+          <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">The conversion system</div>
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">Awareness, then understanding, then defensibility.</h2>
+          <p class="text-xs text-gray-600 mt-1.5 leading-snug">Progressive depth and control—structured assessment infrastructure, not a pricing ladder.</p>
+        </div>
+
+        <div class="mb-5" role="tablist" aria-label="Conversion stages">
+          <div class="flex flex-col md:flex-row md:items-stretch gap-2 md:gap-0">
+            <button type="button" role="tab" aria-selected="true" id="funnelStageFree" onclick="setFunnel('free')" class="funnel-stage-btn relative overflow-hidden flex-1 text-left rounded-xl border p-3.5 md:p-4 transition-all duration-200 min-w-0 border-indigo-400 bg-indigo-50/90 shadow-md ring-2 ring-indigo-200/80 md:rounded-r-none md:rounded-l-xl">
+              <svg class="pointer-events-none absolute -right-1 top-1/2 h-[4.5rem] w-[4.5rem] -translate-y-1/2 text-indigo-500/[0.14]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+              <div class="relative z-[1] flex items-start gap-3">
+                <span class="shrink-0 text-3xl font-bold tabular-nums leading-none text-indigo-700 md:text-4xl">1</span>
+                <div class="min-w-0 pt-0.5">
+                  <div class="font-bold text-gray-900 text-sm leading-snug">Free Snapshot</div>
+                  <div class="text-xs text-gray-600 mt-0.5 leading-snug">See the problem</div>
+                </div>
+              </div>
+            </button>
+            <div class="hidden md:flex flex-none w-px bg-gradient-to-b from-transparent via-indigo-200 to-transparent self-stretch min-h-[4.5rem]" aria-hidden="true"></div>
+            <button type="button" role="tab" aria-selected="false" id="funnelStageLite" onclick="setFunnel('lite')" class="funnel-stage-btn relative overflow-hidden flex-1 text-left rounded-xl border p-3.5 md:p-4 transition-all duration-200 min-w-0 border-gray-200/90 bg-white/95 hover:border-indigo-200 hover:bg-indigo-50/50 md:rounded-none">
+              <svg class="pointer-events-none absolute -right-1 top-1/2 h-[4.5rem] w-[4.5rem] -translate-y-1/2 text-indigo-500/[0.14]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.1" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+              <div class="relative z-[1] flex items-start gap-3">
+                <span class="shrink-0 text-3xl font-bold tabular-nums leading-none text-indigo-600 md:text-4xl">2</span>
+                <div class="min-w-0 pt-0.5">
+                  <div class="font-bold text-gray-900 text-sm leading-snug">Lite Analysis</div>
+                  <div class="text-xs text-gray-600 mt-0.5 leading-snug">Understand and improve it</div>
+                </div>
+              </div>
+            </button>
+            <div class="hidden md:flex flex-none w-px bg-gradient-to-b from-transparent via-indigo-200 to-transparent self-stretch min-h-[4.5rem]" aria-hidden="true"></div>
+            <button type="button" role="tab" aria-selected="false" id="funnelStageFull" onclick="setFunnel('full')" class="funnel-stage-btn relative overflow-hidden flex-1 text-left rounded-xl border p-3.5 md:p-4 transition-all duration-200 min-w-0 border-gray-200/90 bg-white/95 hover:border-indigo-200 hover:bg-indigo-50/50 md:rounded-l-none md:rounded-r-xl">
+              <svg class="pointer-events-none absolute -right-1 top-1/2 h-[4.25rem] w-[4.25rem] -translate-y-1/2 text-indigo-500/[0.14]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.15" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+              <div class="relative z-[1] flex items-start gap-3">
+                <span class="shrink-0 text-3xl font-bold tabular-nums leading-none text-indigo-600 md:text-4xl">3</span>
+                <div class="min-w-0 pt-0.5">
+                  <div class="font-bold text-gray-900 text-sm leading-snug">Full Audit-Grade</div>
+                  <div class="text-xs text-gray-600 mt-0.5 leading-snug">Make it defensible</div>
+                </div>
+              </div>
+            </button>
+          </div>
+          <div class="mt-2 hidden md:flex items-center justify-between px-1 text-[10px] text-indigo-400 font-medium uppercase tracking-[0.2em]" aria-hidden="true">
+            <span class="flex-1 text-center">Visibility</span>
+            <span class="flex-1 text-center">Control</span>
+            <span class="flex-1 text-center">Governance</span>
+          </div>
+        </div>
+
+        <div id="funnelPanel" class="rounded-xl border border-gray-200/90 bg-white/90 p-4 md:p-5 shadow-sm">
+          <div class="border-b border-gray-100 pb-3 mb-4">
+            <h3 class="text-sm font-bold text-gray-900 leading-snug">Credible visibility without full exposure.</h3>
+            <p class="text-xs text-gray-600 mt-1.5 leading-snug">Surface meaningful gaps and prove the system works — without giving away the full assessment.</p>
+          </div>
+          <div class="grid lg:grid-cols-2 gap-3">
+            <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-3.5">
+              <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-indigo-700 mb-2">Included</div>
+              <ul class="space-y-1.5 text-xs text-gray-800">
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Overall score</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Section-level visibility</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">3 surfaced gaps</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">1–2 example fixes</li>
+              </ul>
+            </div>
+            <div class="rounded-lg border border-gray-200 bg-gray-50/30 p-3.5">
+              <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-gray-500 mb-2">Withheld</div>
+              <ul class="space-y-1.5 text-xs text-gray-600">
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Requirement-level findings</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Full evidence linkage</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Complete remediation set</li>
+                <li class="rounded-md bg-white border border-gray-100 px-2.5 py-1.5 leading-snug">Revised document generation</li>
+              </ul>
+            </div>
+          </div>
+          <p class="mt-4 text-indigo-700 text-sm font-semibold leading-snug">See every gap and generate a complete improved version.</p>
+        </div>
+      </div>
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('works')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <button type="button" onclick="showView('gtm')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Show GTM →</button>
+      </div>
+    </section>
+
+    <section id="gtmView" class="view fade-in space-y-4">
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5">
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">Go-to-market</div>
+        <h2 class="text-base sm:text-lg font-bold mb-2 text-gray-900 leading-snug">Use paid channels to learn, communities to validate, and partners to scale.</h2>
+        <p class="text-sm text-gray-600 max-w-3xl leading-snug">The six-month phase is designed to discover who buys, which policy types pull demand, and which channels can become repeatable.</p>
+      </div>
+      <div class="grid lg:grid-cols-5 gap-2">
+        <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"><div class="text-indigo-600 text-xs font-semibold">PPC</div><h3 class="text-sm font-bold my-1 text-gray-900 leading-snug">Learn</h3><p class="text-gray-600 text-xs leading-snug">Keyword, intent, willingness-to-pay intelligence.</p></div>
+        <div class="rounded-lg border border-gray-200 bg-indigo-50/50 p-3"><div class="text-indigo-700 text-xs font-semibold">SEO</div><h3 class="text-sm font-bold my-1 text-gray-900 leading-snug">Compound</h3><p class="text-gray-600 text-xs leading-snug">Policy pages build perennial demand capture.</p></div>
+        <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"><div class="text-indigo-600 text-xs font-semibold">Email</div><h3 class="text-sm font-bold my-1 text-gray-900 leading-snug">Capture</h3><p class="text-gray-600 text-xs leading-snug">Send your policy → get a Snapshot report.</p></div>
+        <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"><div class="text-indigo-600 text-xs font-semibold">Community</div><h3 class="text-sm font-bold my-1 text-gray-900 leading-snug">Validate</h3><p class="text-gray-600 text-xs leading-snug">Test messaging in known ICP clusters.</p></div>
+        <div class="rounded-lg border border-gray-200 bg-white p-3 shadow-sm"><div class="text-indigo-600 text-xs font-semibold">Partners</div><h3 class="text-sm font-bold my-1 text-gray-900 leading-snug">Scale</h3><p class="text-gray-600 text-xs leading-snug">Consultants use runs and templates repeatedly.</p></div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl bg-gray-50/80 p-4 md:p-5">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+          <div class="max-w-xl">
+            <div class="text-[10px] tracking-[0.14em] text-indigo-600 mb-1 font-semibold leading-snug"><span class="font-bold">Automated</span> Agentic GTM Loop</div>
+            <h3 class="text-sm font-bold mb-1.5 text-gray-900 leading-snug">Market discovery becomes product creation.</h3>
+            <p class="text-sm text-gray-600 leading-snug">Agents identify demand, generate Lite + Full templates, populate marketing pages, and feed data back into the next test.</p>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs w-full lg:w-1/2">
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Discovery</div>
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Templates</div>
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Pages</div>
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Traffic</div>
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Data</div>
+            <div class="rounded-md bg-white border border-gray-200 px-2.5 py-2 text-gray-800 font-medium shadow-sm">Iterate</div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('funnel')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <button type="button" onclick="showView('opportunity')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Show opportunity →</button>
+      </div>
+    </section>
+
+    <section id="opportunityView" class="view fade-in space-y-4">
+      <div class="pz-surface-elevated rounded-xl bg-gradient-to-br from-white via-indigo-50/35 to-gray-50 p-4 md:p-5 border-indigo-100">
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">The opportunity</div>
+        <h2 class="text-base sm:text-lg font-bold mb-2 text-gray-900 leading-snug">A lean six-month validation phase to turn assumptions into evidence.</h2>
+        <p class="text-sm text-gray-600 max-w-3xl leading-snug">The target is not break-even. The target is validated traction, measurable funnel behaviour, and a clear path to lower CAC and scale.</p>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-3">
+        <div class="pz-surface-elevated rounded-xl p-4">
+          <h3 class="text-sm font-bold mb-3 text-gray-900 leading-snug">Hypothesis-driven revenue model</h3>
+          <div class="space-y-2 text-xs">
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800 leading-snug">1,000 visitors → 200 Snapshots → 10 paid users → £700/month</div>
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800 leading-snug">5,000 visitors → 1,000 Snapshots → 50 paid users → £3,500/month</div>
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800 leading-snug">Hybrid mix → retail + consultants + add-ons → £3k-£4.5k/month early signal range</div>
+          </div>
+        </div>
+        <div class="pz-surface-elevated rounded-xl p-4">
+          <h3 class="text-sm font-bold mb-3 text-gray-900 leading-snug">Tool → system trajectory</h3>
+          <div class="space-y-2 text-xs">
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800">1. Point solution</div>
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800">2. Repeatable workflow</div>
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800">3. System of record</div>
+            <div class="rounded-md bg-gray-50 border border-gray-200 px-2.5 py-2 text-gray-800">4. Agentic compliance system + integrations</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl bg-gray-50/80 p-4 md:p-5">
+        <div class="grid lg:grid-cols-3 gap-3 items-center">
+          <div class="lg:col-span-2">
+            <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">Budget</div>
+            <h3 class="text-lg font-bold mb-1.5 text-gray-900 leading-snug">£35k baseline for six months of discovery.</h3>
+            <p class="text-sm text-gray-600 leading-snug">£5k setup + £5k/month burn. Roughly half marketing, half operations. Designed to prove PMF, GTM, CAC, conversion, and repeat usage.</p>
+          </div>
+          <div class="rounded-lg bg-indigo-600 text-white p-4 shadow-md">
+            <div class="text-[10px] uppercase tracking-[0.2em] text-indigo-100 font-medium">Validation ask</div>
+            <div class="text-2xl font-bold mt-1">£35k-£50k</div>
+            <div class="mt-1 text-sm font-medium text-indigo-100">pre-seed discovery round</div>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('gtm')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button type="button" onclick="showView('problem')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">Restart</button>
+          <button type="button" onclick="showView('lifecycle')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">P2 Revenue →</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="lifecycleView" class="view fade-in space-y-4">
+      <div class="pz-surface-elevated rounded-xl overflow-hidden bg-gradient-to-br from-white via-indigo-50/40 to-gray-50 p-4 md:p-5 border-indigo-100">
+        <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">Future revenue sources and product expansion</h2>
+        <p class="text-sm font-semibold text-indigo-700 mt-1.5 leading-snug">Dream future revenue streams.</p>
+        <p class="text-sm text-gray-600 mt-2 max-w-4xl leading-snug">Parzley expands from policy checking into a full lifecycle system: creation, validation, operationalisation, training, and compliance evidence.</p>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl p-4 md:p-5">
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-2">Lifecycle footprint</div>
+        <p class="text-xs text-gray-600 mb-2.5 leading-snug max-w-4xl">Select a capability to see how it could work and what it delivers. Parzley Policy Checker is live today; the others illustrate the roadmap.</p>
+        <div class="rounded-lg border border-gray-200 bg-gray-50/80 p-2.5 shadow-inner">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-2.5">
+            <button type="button" onclick="setLifecycle(0)" class="lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+              <span class="pointer-events-none absolute top-0 right-0 z-10 inline-flex min-h-[1.25rem] min-w-[1.75rem] items-center justify-center rounded-bl-md border-b border-l border-gray-300/90 bg-gray-200/95 px-1.5 text-[10px] font-bold tracking-tight text-gray-700 shadow-sm" title="Phase 2 - roadmap">P2</span>
+              <div class="text-xs font-bold text-gray-900 leading-snug pr-7">Policy Creation Experience</div>
+              <p class="text-[11px] text-gray-600 mt-1 leading-snug">Generates complete, compliant policies through any-channel, natural language interaction with stakeholders.</p>
+            </button>
+            <button type="button" onclick="setLifecycle(1)" class="lifecycle-box relative overflow-hidden rounded-lg border-2 border-indigo-500 bg-gradient-to-br from-white via-indigo-50 to-indigo-100/90 p-3.5 pt-4 text-left w-full shadow-md ring-2 ring-indigo-400/40" aria-current="true">
+              <span class="pointer-events-none absolute top-0 right-0 z-10 inline-flex min-h-[1.25rem] min-w-[1.75rem] items-center justify-center rounded-bl-md border-b border-l border-indigo-700/30 bg-indigo-600 px-1.5 text-[10px] font-bold tracking-tight text-white shadow-sm" title="Phase 1 - live today">P1</span>
+              <div class="text-xs font-bold text-gray-900 leading-snug pr-7">Parzley Policy Checker</div>
+              <p class="text-[11px] text-gray-600 mt-1 leading-snug">Identifies gaps, recommends fixes, and produces improved policy documents</p>
+            </button>
+            <button type="button" onclick="setLifecycle(2)" class="lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+              <span class="pointer-events-none absolute top-0 right-0 z-10 inline-flex min-h-[1.25rem] min-w-[1.75rem] items-center justify-center rounded-bl-md border-b border-l border-gray-300/90 bg-gray-200/95 px-1.5 text-[10px] font-bold tracking-tight text-gray-700 shadow-sm" title="Phase 2 - roadmap">P2</span>
+              <div class="text-xs font-bold text-gray-900 leading-snug pr-7">Policy Operationalisation Agent</div>
+              <p class="text-[11px] text-gray-600 mt-1 leading-snug">Transforms policies into workflows, procedures, and playbooks</p>
+            </button>
+            <button type="button" onclick="setLifecycle(3)" class="lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+              <span class="pointer-events-none absolute top-0 right-0 z-10 inline-flex min-h-[1.25rem] min-w-[1.75rem] items-center justify-center rounded-bl-md border-b border-l border-gray-300/90 bg-gray-200/95 px-1.5 text-[10px] font-bold tracking-tight text-gray-700 shadow-sm" title="Phase 2 - roadmap">P2</span>
+              <div class="text-xs font-bold text-gray-900 leading-snug pr-7">Policy Training Agent</div>
+              <p class="text-[11px] text-gray-600 mt-1 leading-snug">Delivers role-specific training and validates understanding</p>
+            </button>
+            <button type="button" onclick="setLifecycle(4)" class="lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors">
+              <span class="pointer-events-none absolute top-0 right-0 z-10 inline-flex min-h-[1.25rem] min-w-[1.75rem] items-center justify-center rounded-bl-md border-b border-l border-gray-300/90 bg-gray-200/95 px-1.5 text-[10px] font-bold tracking-tight text-gray-700 shadow-sm" title="Phase 2 - roadmap">P2</span>
+              <div class="text-xs font-bold text-gray-900 leading-snug pr-7">Compliance Evidence Agent</div>
+              <p class="text-[11px] text-gray-600 mt-1 leading-snug">Continuously generates audit-ready evidence of compliance</p>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="lifecycleDetailPanel" class="pz-surface-elevated rounded-xl p-4 md:p-5"></div>
+
+      <div class="flex justify-between gap-2 flex-wrap">
+        <button type="button" onclick="showView('opportunity')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← Back</button>
+        <div class="flex flex-wrap gap-2 justify-end">
+          <button type="button" onclick="showView('problem')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">Restart</button>
+          <button type="button" onclick="showView('marketExit')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Market &amp; Exit →</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="marketExitView" class="view fade-in space-y-3">
+      <div class="grid lg:grid-cols-2 gap-3 items-stretch">
+        <div class="pz-surface-elevated rounded-xl overflow-hidden bg-gradient-to-br from-white via-indigo-50/40 to-gray-50 p-4 md:p-5 border-indigo-100">
+          <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-1">Market &amp; exit</div>
+          <h2 class="text-base sm:text-lg font-bold text-gray-900 leading-snug">Market Positioning &amp; Strategic Value</h2>
+          <p class="text-xs text-gray-600 mt-1.5 leading-snug">Parzley occupies the space between lightweight policy generators and enterprise governance platforms by combining structured policy analysis, remediation, and AI-native compliance workflows.</p>
+          <h3 class="text-sm font-bold text-gray-900 mt-3 leading-snug">Affordable audit-grade policy intelligence and remediation</h3>
+          <p class="text-xs text-gray-600 mt-1.5 leading-snug">Parzley transforms policies and standards into structured, machine-readable requirements, identifies document gaps, generates recommendations, and produces improved outputs.</p>
+          <div class="mt-3 rounded-lg border border-indigo-200 bg-white/90 p-3 text-xs text-gray-700 leading-snug">
+            <p class="font-semibold text-gray-900 mb-1">Governance fit</p>
+            <p>Parzley is not trying to replace enterprise governance systems. It improves the quality, structure, remediation capability, and operational usability of the compliance artefacts those systems rely on.</p>
+          </div>
+        </div>
+        <div class="pz-surface-elevated rounded-xl p-4 md:p-5 flex flex-col">
+          <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-2">Positioning summary</div>
+          <ul class="space-y-2 text-xs text-gray-700 flex-1">
+            <li class="flex gap-2 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-1.5"><span class="text-indigo-600 font-bold shrink-0">·</span><span>Structured policy intelligence</span></li>
+            <li class="flex gap-2 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-1.5"><span class="text-indigo-600 font-bold shrink-0">·</span><span>Atomic requirement analysis</span></li>
+            <li class="flex gap-2 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-1.5"><span class="text-indigo-600 font-bold shrink-0">·</span><span>AI-driven remediation</span></li>
+            <li class="flex gap-2 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-1.5"><span class="text-indigo-600 font-bold shrink-0">·</span><span>Consultant and SMB accessible</span></li>
+            <li class="flex gap-2 rounded-md bg-gray-50 border border-gray-100 px-2.5 py-1.5"><span class="text-indigo-600 font-bold shrink-0">·</span><span>Expands naturally into operational workflows and compliance systems</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pz-surface-elevated rounded-xl p-3 md:p-4">
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-2">Market map</div>
+        <div class="flex flex-col lg:flex-row lg:items-stretch gap-2 lg:gap-1">
+          <div class="market-card-hover pz-surface rounded-lg p-3 flex-1 min-w-0">
+            <div class="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-1">Policy generators</div>
+            <h4 class="text-xs font-bold text-gray-900 mb-2">Policy Generators</h4>
+            <p class="text-[10px] text-gray-500 mb-2">Termly · iubenda · TermsFeed</p>
+            <p class="text-[10px] font-semibold text-indigo-700 mb-1">Strengths</p>
+            <ul class="text-[11px] text-gray-600 space-y-0.5 mb-2 list-disc pl-3.5"><li>Fast generation</li><li>Low cost</li><li>Simple self-serve workflows</li></ul>
+            <p class="text-[10px] font-semibold text-gray-700 mb-1">Weaknesses</p>
+            <ul class="text-[11px] text-gray-600 space-y-0.5 list-disc pl-3.5"><li>Weak analysis</li><li>Weak remediation</li><li>Template-driven outputs</li><li>Limited operational depth</li></ul>
+          </div>
+          <div class="hidden lg:flex flex-col justify-center px-1 text-indigo-300 text-lg font-light select-none" aria-hidden="true">←</div>
+          <div class="relative flex-1 min-w-0 order-first rounded-lg border-2 border-indigo-500 bg-gradient-to-b from-indigo-50 to-white p-3 pt-3 shadow-md ring-2 ring-indigo-400/30 lg:order-none">
+            <div>
+              <h4 class="text-sm font-bold text-gray-900 text-center">Parzley</h4>
+              <p class="text-[10px] text-indigo-800 font-semibold text-center mt-0.5 leading-tight">Structured compliance analysis and remediation</p>
+              <ul class="mt-2 text-[11px] text-gray-700 space-y-0.5">
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>Atomic requirement analysis</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>Gap identification</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>AI-generated remediation</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>Revised policy outputs</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>Policy operationalisation potential</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>Consultant-friendly workflows</span></li>
+                <li class="flex gap-1.5"><span class="text-indigo-600 shrink-0">✓</span><span>SMB accessibility</span></li>
+              </ul>
+              <p class="text-[10px] text-gray-600 text-center mt-2 leading-snug border-t border-indigo-100 pt-2">Improves quality, structure, and operational usability of compliance artefacts.</p>
+            </div>
+          </div>
+          <div class="hidden lg:flex flex-col justify-center px-1 text-indigo-300 text-lg font-light select-none" aria-hidden="true">→</div>
+          <div class="market-card-hover pz-surface rounded-lg p-3 flex-1 min-w-0">
+            <div class="text-[10px] font-bold uppercase tracking-wide text-gray-500 mb-1">Enterprise GRC</div>
+            <h4 class="text-xs font-bold text-gray-900 mb-2">Enterprise GRC Platforms</h4>
+            <p class="text-[10px] text-gray-500 mb-2">Vanta · Drata · OneTrust</p>
+            <p class="text-[10px] font-semibold text-indigo-700 mb-1">Strengths</p>
+            <ul class="text-[11px] text-gray-600 space-y-0.5 mb-2 list-disc pl-3.5"><li>Governance workflows</li><li>Evidence collection</li><li>Enterprise integrations</li><li>Audit management</li></ul>
+            <p class="text-[10px] font-semibold text-gray-700 mb-1">Weaknesses</p>
+            <ul class="text-[11px] text-gray-600 space-y-0.5 list-disc pl-3.5"><li>Expensive</li><li>Enterprise-heavy</li><li>Weak bespoke policy remediation</li><li>Limited document intelligence</li></ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-2 px-0.5">Strategic value</div>
+        <div class="grid sm:grid-cols-2 gap-2.5">
+          <div class="market-card-hover pz-surface rounded-lg p-3.5">
+            <h4 class="text-xs font-bold text-gray-900 mb-1.5">Structured Policy Intelligence</h4>
+            <p class="text-xs text-gray-600 leading-snug">Transforms policies into machine-readable, independently testable requirements.</p>
+          </div>
+          <div class="market-card-hover pz-surface rounded-lg p-3.5">
+            <h4 class="text-xs font-bold text-gray-900 mb-1.5">AI-Driven Remediation</h4>
+            <p class="text-xs text-gray-600 leading-snug">Generates recommendations and improved policy outputs, not just findings.</p>
+          </div>
+          <div class="market-card-hover pz-surface rounded-lg p-3.5">
+            <h4 class="text-xs font-bold text-gray-900 mb-1.5">Lifecycle Expansion</h4>
+            <p class="text-xs text-gray-600 leading-snug mb-1.5">Expands naturally into:</p>
+            <ul class="text-[11px] text-gray-600 list-disc pl-3.5 space-y-0.5"><li>policy creation</li><li>operational workflows</li><li>training</li><li>compliance evidence</li></ul>
+          </div>
+          <div class="market-card-hover pz-surface rounded-lg p-3.5 border-indigo-100 bg-indigo-50/40">
+            <h4 class="text-xs font-bold text-gray-900 mb-1.5">Strategic Fit</h4>
+            <p class="text-xs text-gray-600 leading-snug">Complements governance systems by improving the quality and usability of the compliance artefacts those systems depend on.</p>
+            <p class="text-[11px] text-gray-600 mt-2 leading-snug">Creates strategic acquisition potential for governance, compliance, and audit platforms.</p>
+          </div>
+        </div>
+      </div>
+
+      <details class="market-buyers pz-surface-elevated rounded-xl border border-gray-200 overflow-hidden group">
+        <summary class="px-4 py-3 cursor-pointer text-sm font-bold text-gray-900 hover:bg-gray-50 flex items-center justify-between gap-2 transition-colors">
+          <span>Potential Strategic Buyers</span>
+          <span class="text-[10px] font-semibold uppercase tracking-wide text-indigo-600 shrink-0"><span class="label-expand">Expand</span><span class="label-collapse">Collapse</span></span>
+        </summary>
+        <div class="px-4 pb-4 pt-0 border-t border-gray-100 text-xs text-gray-600 leading-snug space-y-3">
+          <ul class="list-disc pl-3.5 space-y-1 text-gray-800">
+            <li>Enterprise GRC platforms</li>
+            <li>Policy governance systems</li>
+            <li>AI compliance tooling providers</li>
+            <li>Audit and assurance platforms</li>
+          </ul>
+          <p>Parzley strengthens existing governance systems through structured policy intelligence, remediation, and AI-native compliance workflows.</p>
+          <p class="text-[10px] text-gray-400 border border-dashed border-gray-200 rounded-md px-2 py-1.5 bg-gray-50/80">Logo strip placeholder (muted, non-dominant): add SVG or monochrome marks here if assets are available.</p>
+        </div>
+      </details>
+
+      <div class="flex justify-between gap-2 flex-wrap pt-1">
+        <button type="button" onclick="showView('lifecycle')" class="px-3 py-2 rounded-lg pz-surface text-gray-700 text-sm font-medium hover:bg-gray-50">← P2 Revenue</button>
+        <button type="button" onclick="showView('problem')" class="px-3.5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow-sm hover:bg-indigo-700">Restart →</button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-3 text-gray-500 text-xs">Prototype wireframe. Content compressed from Parzley sales canvas for interactive review.</footer>
+
+  <script>
+    const views = ['problem','product','works','funnel','gtm','opportunity','lifecycle','marketExit'];
+    const tabPassive = 'nav-btn px-2.5 py-1.5 rounded-md border tab-passive font-medium text-xs';
+    const tabActive = 'nav-btn px-2.5 py-1.5 rounded-md border tab-active font-medium text-xs';
+    function showView(view) {
+      views.forEach(v => {
+        document.getElementById(v + 'View').classList.remove('active');
+        document.getElementById(v + 'Tab').className = tabPassive;
+      });
+      document.getElementById(view + 'View').classList.add('active');
+      document.getElementById(view + 'Tab').className = tabActive;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    const lifecycleStepActive = 'group step-btn rounded-lg border border-indigo-300 bg-indigo-50 p-2.5 text-left shadow-sm';
+    const lifecycleStepPassive = 'group step-btn rounded-lg border border-gray-200 bg-white p-2.5 text-left hover:bg-gray-50';
+    const assessmentSteps = [
+      ['01', 'Select Standard', 'Choose a codified standard or reusable internal baseline.'],
+      ['02', 'Upload Target Document', 'Documents are processed in controlled segments to minimise unnecessary data exposure during analysis.'],
+      ['03', 'Run Assessment', 'The system evaluates requirement-level coverage using predefined assessment logic.'],
+      ['04', 'Review Findings', 'Inspect evidence-linked gaps, partial coverage, risk areas, and policy drift.'],
+      ['05', 'Generate Outputs', 'Produce recommendations, revised documents, and reusable governance artefacts.']
+    ];
+    const standardSteps = [
+      ['01', 'Ingest Source Material', 'Upload policies, frameworks, standards, or internal governance documentation.'],
+      ['02', 'Extract Atomic Requirements', 'Complex prose is decomposed into independently testable requirements.'],
+      ['03', 'Attach Assessment Logic', 'Each requirement includes predefined testing instructions to improve consistency.'],
+      ['04', 'Create Reusable Standard', 'The codified standard becomes reusable across repeat assessments and workflows.'],
+      ['05', 'Operationalise Governance', 'Use the same structured baseline for recurring reviews, monitoring, and remediation.']
+    ];
+    function renderLifecyclePanel(panelId, tuple) {
+      const stepNum = tuple[0];
+      const title = tuple[1];
+      const body = tuple[2];
+      document.getElementById(panelId).innerHTML =
+        `<div class="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 mb-1.5"><span class="text-indigo-700 text-xs font-semibold tabular-nums shrink-0">${stepNum}</span><h3 class="text-sm font-bold text-gray-900 leading-snug">${title}</h3></div><p class="text-sm text-gray-600 leading-snug">${body}</p>`;
+    }
+    function setAssessmentStep(index) {
+      document.querySelectorAll('.assessment-step-btn').forEach((btn, i) => {
+        const wide = i === 4 ? ' sm:col-span-2 lg:col-span-1' : '';
+        btn.className = (i === index ? lifecycleStepActive : lifecycleStepPassive) + ' assessment-step-btn' + wide;
+      });
+      renderLifecyclePanel('assessmentStepPanel', assessmentSteps[index]);
+    }
+    function setStandardStep(index) {
+      document.querySelectorAll('.standard-step-btn').forEach((btn, i) => {
+        const wide = i === 4 ? ' sm:col-span-2 lg:col-span-1' : '';
+        btn.className = (i === index ? lifecycleStepActive : lifecycleStepPassive) + ' standard-step-btn' + wide;
+      });
+      renderLifecyclePanel('standardStepPanel', standardSteps[index]);
+    }
+
+    function funnelStageClass(position, active) {
+      const corners = position === 'free' ? 'md:rounded-r-none md:rounded-l-xl' : position === 'lite' ? 'md:rounded-none' : 'md:rounded-l-none md:rounded-r-xl';
+      const base = 'funnel-stage-btn relative overflow-hidden flex-1 text-left rounded-xl border p-3.5 md:p-4 transition-all duration-200 min-w-0 ' + corners + ' ';
+      const on = 'border-indigo-400 bg-indigo-50/90 shadow-md ring-2 ring-indigo-200/80';
+      const off = 'border-gray-200/90 bg-white/95 hover:border-indigo-200 hover:bg-indigo-50/50';
+      return base + (active ? on : off);
+    }
+    const funnelData = {
+      free: {
+        headline: 'Credible visibility without full exposure.',
+        keyMessage: 'Surface meaningful gaps and prove the system works — without giving away the full assessment.',
+        stageIntent: 'Create awareness, demonstrate credibility, and surface meaningful governance gaps.',
+        acquisitionItems: ['LinkedIn communities', 'Educational content', 'Partner publications', 'Peak-body magazines', 'Professional groups', 'Reddit communities', 'Referral links', 'Direct website access'],
+        workflowHighlight: 'Email a policy to a dedicated intake address and receive a snapshot assessment report automatically—minimal onboarding friction.',
+        workflowItems: ['Upload a document directly in the product', 'Embedded partner widgets', 'Peak-body integrations', 'Coupon-code activation flows', 'Automated report delivery'],
+        mechanismHeading: 'Conversion mechanism',
+        mechanismItems: ['Tracked upgrade links in every report', 'Surfaced gaps and example fixes', 'Progressively stronger upgrade prompts', 'Designed to escalate engagement intentionally'],
+        leftHeading: 'Included',
+        leftItems: ['Overall score', 'Section-level visibility', '3 surfaced gaps', '1–2 example fixes'],
+        rightHeading: 'Withheld',
+        rightItems: ['Requirement-level findings', 'Full evidence linkage', 'Complete remediation set', 'Revised document generation'],
+        rightTone: 'muted',
+        cta: 'See every gap and generate a complete improved version.'
+      },
+      lite: {
+        headline: 'Complete visibility with lightweight remediation.',
+        keyMessage: 'Get full findings and usable improvements using a streamlined assessment model.',
+        stageIntent: 'Convert awareness into operational product usage.',
+        acquisitionItems: ['Upgrades from snapshot reports', 'Coupon codes', 'Partner offers', 'Embedded partner workflows', 'Direct website onboarding'],
+        workflowHighlight: null,
+        workflowItems: ['Create an account', 'Upload documents', 'Receive complete findings visibility', 'Generate lightweight remediated outputs'],
+        mechanismHeading: 'Conversion mechanism',
+        mechanismItems: ['Governance limitations', 'Audit-depth limitations', 'Workflow-control limitations', 'Visible defensibility boundaries', 'Upgrade path feels operationally motivated'],
+        leftHeading: 'Included',
+        leftItems: ['Full findings visibility', 'Prioritised gaps', 'Lightweight remediation', 'Improved document generation'],
+        rightHeading: 'Limited',
+        rightItems: ['Deep assessment logic', 'Advanced linkage validation', 'Audit-grade defensibility', 'Fine-grained workflow control'],
+        rightTone: 'muted',
+        cta: 'Upgrade to audit-grade workflows and defensible outputs.'
+      },
+      full: {
+        headline: 'Audit-grade governance workflows.',
+        keyMessage: 'Requirement-level traceability, evidence-linked findings, controllable remediation, and defensible outputs.',
+        stageIntent: 'Operationalise repeatable governance workflows and defensible compliance infrastructure.',
+        acquisitionItems: ['Upgrades from Lite', 'Consultant onboarding', 'Organisational rollout', 'Recurring governance operations'],
+        workflowHighlight: null,
+        workflowItems: ['Reusable standards', 'Evidence-linked findings', 'Persistent governance workflows', 'Controlled remediation', 'Recurring assessment infrastructure'],
+        mechanismHeading: 'Retention mechanism',
+        mechanismItems: ['Recurring audits and assurance cycles', 'Governance monitoring', 'Policy drift detection', 'Repeat assessments on the same baselines', 'Operational dependency on structured outputs'],
+        leftHeading: 'Included',
+        leftItems: ['Full atomic requirement analysis', 'Evidence-linked findings', 'Complete remediation workflows', 'Human-reviewed outputs', 'Governance persistence', 'Audit-grade traceability'],
+        rightHeading: 'Outcome',
+        rightItems: ['Defensible compliance workflows', 'Repeatable governance operations', 'Reusable assessment infrastructure', 'Enterprise-grade review capability'],
+        rightTone: 'emphasis',
+        cta: 'Run enterprise-grade compliance workflows.'
+      }
+    };
+    function funnelPillItems(items, tone) {
+      const liClass = tone === 'emphasis'
+        ? 'inline-flex max-w-full items-center rounded-md border border-indigo-200/80 bg-indigo-50/60 px-2 py-1 text-[11px] font-medium leading-snug text-gray-900'
+        : 'inline-flex max-w-full items-center rounded-md border border-gray-200 bg-white px-2 py-1 text-[11px] leading-snug text-gray-800';
+      return items.map(x => `<li class="${liClass}">${x}</li>`).join('');
+    }
+    function setFunnel(type) {
+      const idx = type === 'free' ? 0 : type === 'lite' ? 1 : 2;
+      document.getElementById('funnelStageFree').className = funnelStageClass('free', idx === 0);
+      document.getElementById('funnelStageLite').className = funnelStageClass('lite', idx === 1);
+      document.getElementById('funnelStageFull').className = funnelStageClass('full', idx === 2);
+      document.getElementById('funnelStageFree').setAttribute('aria-selected', idx === 0 ? 'true' : 'false');
+      document.getElementById('funnelStageLite').setAttribute('aria-selected', idx === 1 ? 'true' : 'false');
+      document.getElementById('funnelStageFull').setAttribute('aria-selected', idx === 2 ? 'true' : 'false');
+      const d = funnelData[type];
+      const rightEmphasis = d.rightTone === 'emphasis';
+      const rightBoxClass = rightEmphasis
+        ? 'rounded-lg border border-indigo-100 bg-indigo-50/50 p-3.5'
+        : 'rounded-lg border border-gray-200 bg-gray-50/30 p-3.5';
+      const rightHeadingClass = rightEmphasis ? 'text-indigo-800' : 'text-gray-500';
+      const productPillLeft = 'inline-flex max-w-full items-center rounded-md border border-gray-100 bg-white px-2 py-1 text-xs leading-snug text-gray-800';
+      const productPillRight = rightEmphasis
+        ? 'inline-flex max-w-full items-center rounded-md border border-indigo-100 bg-white px-2 py-1 text-xs font-medium leading-snug text-gray-900'
+        : 'inline-flex max-w-full items-center rounded-md border border-gray-100 bg-white px-2 py-1 text-xs leading-snug text-gray-600';
+      const workflowHighlightBlock = d.workflowHighlight
+        ? `<div class="mb-2 inline-flex max-w-full rounded-md border border-indigo-200 bg-indigo-50/70 px-2 py-1.5 text-[11px] font-medium leading-snug text-gray-900">${d.workflowHighlight}</div>`
+        : '';
+      const mechTone = type === 'full' ? 'emphasis' : 'default';
+      document.getElementById('funnelPanel').innerHTML = `
+        <div class="border-b border-gray-100 pb-3 mb-3">
+          <h3 class="text-sm font-bold text-gray-900 leading-snug">${d.headline}</h3>
+          <p class="text-xs text-gray-600 mt-1.5 leading-snug">${d.keyMessage}</p>
+        </div>
+        <div class="rounded-lg border border-indigo-100/80 bg-indigo-50/40 p-3 mb-3">
+          <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-indigo-700 mb-1">Stage intent</div>
+          <p class="text-xs text-gray-800 leading-snug">${d.stageIntent}</p>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2.5 mb-4">
+          <div class="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
+            <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-gray-500 mb-1.5">User acquisition</div>
+            <ul class="flex flex-wrap gap-1.5 list-none p-0 m-0">${funnelPillItems(d.acquisitionItems, 'default')}</ul>
+          </div>
+          <div class="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm">
+            <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-gray-500 mb-1.5">Workflow</div>
+            ${workflowHighlightBlock}
+            <ul class="flex flex-wrap gap-1.5 list-none p-0 m-0">${funnelPillItems(d.workflowItems, 'default')}</ul>
+          </div>
+          <div class="rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm sm:col-span-2 lg:col-span-1">
+            <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-gray-500 mb-1.5">${d.mechanismHeading}</div>
+            <ul class="flex flex-wrap gap-1.5 list-none p-0 m-0">${funnelPillItems(d.mechanismItems, mechTone === 'emphasis' ? 'emphasis' : 'default')}</ul>
+          </div>
+        </div>
+        <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-gray-500 mb-2">Product progression</div>
+        <div class="grid lg:grid-cols-2 gap-3">
+          <div class="rounded-lg border border-gray-200 bg-gray-50/50 p-3">
+            <div class="text-[10px] uppercase tracking-[0.12em] font-semibold text-indigo-700 mb-1.5">${d.leftHeading}</div>
+            <ul class="flex flex-wrap gap-1.5 list-none p-0 m-0">
+              ${d.leftItems.map(x => `<li class="${productPillLeft}">${x}</li>`).join('')}
+            </ul>
+          </div>
+          <div class="${rightBoxClass}">
+            <div class="text-[10px] uppercase tracking-[0.12em] font-semibold ${rightHeadingClass} mb-1.5">${d.rightHeading}</div>
+            <ul class="flex flex-wrap gap-1.5 list-none p-0 m-0">
+              ${d.rightItems.map(x => `<li class="${productPillRight}">${x}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+        <p class="mt-4 text-indigo-700 text-sm font-semibold leading-snug">${d.cta}</p>`;
+    }
+
+    const lifecycleActive = 'lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full ring-2 ring-indigo-300 border-indigo-300 bg-indigo-50/80 shadow-sm hover:border-indigo-300 transition-colors';
+    const lifecyclePassive = 'lifecycle-box relative overflow-hidden pz-surface rounded-lg p-3.5 pt-4 text-left w-full hover:border-indigo-200 hover:bg-indigo-50/30 transition-colors';
+    const lifecycleLiveIdle = 'lifecycle-box relative overflow-hidden rounded-lg border-2 border-indigo-300 bg-gradient-to-br from-white via-indigo-50 to-indigo-100/80 p-3.5 pt-4 text-left w-full shadow-md';
+    const lifecycleLiveActive = 'lifecycle-box relative overflow-hidden rounded-lg border-2 border-indigo-500 bg-gradient-to-br from-white via-indigo-50 to-indigo-100/90 p-3.5 pt-4 text-left w-full shadow-md ring-2 ring-indigo-400/40';
+    const lifecyclePhases = [
+      {
+        agentName: 'Policy Creation Experience',
+        whatItDoes: 'Generates complete, compliant policies through any-channel, natural language interaction with stakeholders.',
+        howLines: [
+          'Facilitates guided conversations with multiple stakeholders.',
+          'Captures inputs on responsibilities, processes, and constraints.',
+          'Applies embedded compliance knowledge to structure the policy.',
+          'Produces a draft policy for review and approval.'
+        ],
+        benefits: [
+          'High-quality policy outputs',
+          'Significant reduction in time and effort',
+          'No specialist policy knowledge required',
+          'Consistent and structured policy design'
+        ],
+        outputs: ['Complete policy documents', 'Structured policy definitions'],
+        badge: null
+      },
+      {
+        agentName: 'Parzley Policy Checker',
+        whatItDoes: 'Assesses policies against structured requirements and produces improved versions.',
+        howLines: [
+          'Breaks standards into atomic requirements.',
+          'Evaluates the target document against each requirement.',
+          'Identifies gaps and weak coverage.',
+          'Generates recommendations and a revised document.'
+        ],
+        benefits: [
+          'Clear visibility of compliance gaps',
+          'Structured and repeatable assessments',
+          'Faster policy improvement cycles',
+          'Reduced reliance on manual review'
+        ],
+        outputs: ['Gap analysis reports', 'Recommendations', 'Revised policy documents'],
+        badge: 'P1'
+      },
+      {
+        agentName: 'Policy Operationalisation Agent',
+        whatItDoes: 'Transforms policies into organisation-specific workflows, procedures, and playbooks.',
+        howLines: [
+          'Uses the approved policy and underlying requirements as a baseline.',
+          'Engages operational stakeholders through structured questioning.',
+          'Maps real processes to policy requirements.',
+          'Generates compliant workflows tailored to the organisation.'
+        ],
+        benefits: [
+          'Policies become actionable',
+          'Eliminates manual translation from policy to operations',
+          'Ensures workflows are compliant by design',
+          'Aligns policy with real operational processes'
+        ],
+        outputs: ['Playbooks', 'Procedures', 'Operational workflows'],
+        badge: null
+      },
+      {
+        agentName: 'Policy Training Agent',
+        whatItDoes: 'Delivers interactive training and validates understanding of policies and workflows.',
+        howLines: [
+          'Uses policy and workflow outputs as training inputs.',
+          'Generates role-specific training modules.',
+          'Presents interactive scenarios and explanations.',
+          'Tests user understanding through adaptive questioning.',
+          'Tracks completion and comprehension.'
+        ],
+        benefits: [
+          'Faster onboarding to policies and procedures',
+          'Measurable understanding across teams',
+          'Reduced training overhead',
+          'Consistent knowledge delivery'
+        ],
+        outputs: ['Training modules', 'Assessment results', 'Completion records'],
+        badge: null
+      },
+      {
+        agentName: 'Compliance Evidence Agent',
+        whatItDoes: 'Generates continuous, audit-ready evidence of compliance.',
+        howLines: [
+          'Uses policy, workflows, and training records as inputs.',
+          'Tracks required actions and responsibilities.',
+          'Collects attestations and completion signals.',
+          'Identifies missing evidence and gaps.',
+          'Produces structured compliance records.'
+        ],
+        benefits: [
+          'Continuous visibility of compliance status',
+          'Reduced audit preparation effort',
+          'Clear traceability from requirement to action',
+          'Centralised evidence management'
+        ],
+        outputs: ['Evidence logs', 'Compliance reports', 'Audit-ready documentation'],
+        badge: null
+      }
+    ];
+
+    function setLifecycle(index) {
+      document.querySelectorAll('.lifecycle-box').forEach((btn, i) => {
+        if (i === 1) {
+          btn.className = index === 1 ? lifecycleLiveActive : lifecycleLiveIdle;
+          btn.setAttribute('aria-current', index === 1 ? 'true' : 'false');
+        } else {
+          btn.className = i === index ? lifecycleActive : lifecyclePassive;
+          btn.removeAttribute('aria-current');
+        }
+      });
+      const p = lifecyclePhases[index];
+      const howUl = p.howLines.map(line => `<li>${line}</li>`).join('');
+      const benUl = p.benefits.map(b => `<li>${b}</li>`).join('');
+      const outUl = p.outputs.map(o => `<li>${o}</li>`).join('');
+      const badgeRow = p.badge
+        ? `<span class="inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold bg-indigo-600 text-white uppercase tracking-wide">${p.badge}</span>`
+        : '';
+      document.getElementById('lifecycleDetailPanel').innerHTML = `
+        <div class="text-[10px] uppercase tracking-[0.28em] text-indigo-600 font-semibold mb-2">Capability detail</div>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1.5 pb-3 mb-3 border-b border-gray-200">
+          <h3 class="text-sm font-bold text-gray-900 leading-snug">${p.agentName}</h3>
+          ${badgeRow}
+        </div>
+        <div class="rounded-lg border border-gray-200 bg-gray-50/80 p-2.5 shadow-inner">
+          <div class="grid sm:grid-cols-2 gap-2.5">
+            <div class="pz-surface rounded-lg p-3.5">
+              <div class="text-indigo-600 text-xs font-semibold mb-1.5">What it does</div>
+              <p class="text-sm text-gray-600 leading-snug">${p.whatItDoes}</p>
+            </div>
+            <div class="pz-surface rounded-lg p-3.5">
+              <div class="text-indigo-600 text-xs font-semibold mb-1.5">How it works</div>
+              <ul class="text-sm text-gray-600 list-disc pl-4 space-y-1 leading-snug">${howUl}</ul>
+            </div>
+            <div class="pz-surface rounded-lg p-3.5">
+              <div class="text-indigo-600 text-xs font-semibold mb-1.5">Benefit to the organisation</div>
+              <ul class="text-sm text-gray-600 list-disc pl-4 space-y-1 leading-snug">${benUl}</ul>
+            </div>
+            <div class="pz-surface rounded-lg p-3.5">
+              <div class="text-indigo-600 text-xs font-semibold mb-1.5">Output</div>
+              <ul class="text-sm text-gray-600 list-disc pl-4 space-y-1 leading-snug">${outUl}</ul>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    setFunnel('free');
+    setLifecycle(1);
+  </script>
+</body>
+</html>
